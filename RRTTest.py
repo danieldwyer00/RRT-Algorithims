@@ -30,23 +30,31 @@ def check_collision(point1, point2, obstacles):
     return any(line.intersects(obs) for obs in obstacles)
 
 class Node:
-    def __init__(self, position, distanceToParent=None, parent=None):
+    def __init__(self, position, atEndNode=False, distanceToParent=None, parent=None):
         self.position = position          # (x, y)
         self.parent = parent              # Parent Node
         self.distanceToParent = distanceToParent
         self.CumulativeLength = 0                   # Accumulated path length
         self.children = []                # Useful for rewiring (optional)
-        
+        self.atEndNode = atEndNode
         if parent:
             self.CumulativeLength = parent.CumulativeLength + self.distanceToParent
             parent.children.append(self)
 
+maxStepDistance = 3
+endStepDistance = 0.5
+
+StartNode = Node([0,0])
+EndNode = Node([7,4])
+
+ax.scatter(StartNode.position[0], StartNode.position[1], c='blue', s=100, label="Start")
+ax.scatter(EndNode.position[0], EndNode.position[1], c='green', s=100, label="Goal")
 
 Nodes = [
-    Node([0,0]),
-    Node([0,0])
+    StartNode
 ]
 
+foundSolution = False
 
 while True:
     #Generate Random Node
@@ -62,16 +70,35 @@ while True:
         if Distance(node,tempNode) < tempNearestDistance:
             NearestNode = node
             tempNearestDistance = Distance(node,tempNode)
-            tempNode = Node([random_x,random_y],tempNearestDistance,NearestNode)
-
+            tempNode = Node([random_x,random_y],False,tempNearestDistance,NearestNode)
+        
     #Append to Node List if within max distance and no collision
-    maxDistance = 1
-    if tempNearestDistance <= maxDistance and check_collision(tempNode,tempNode.parent,obstacles) == False:
+    
+    if tempNearestDistance <= maxStepDistance and check_collision(tempNode,tempNode.parent,obstacles) == False:
+        if Distance(EndNode,tempNode) <= endStepDistance:
+            tempNode.atEndNode = True
         Nodes.append(tempNode)
-        ax.plot([Nodes[-1].position[0],Nodes[-1].parent.position[0]],[Nodes[-1].position[1],Nodes[-1].parent.position[1]],'r')
+        ax.plot([Nodes[-1].position[0],Nodes[-1].parent.position[0]],[Nodes[-1].position[1],Nodes[-1].parent.position[1]],'r',lw = 1)
         plt.pause(0.05)
 
-    
+    #Find Current Shortest Branch
+    ShortestCumulativeLength = 999999999
+    for node in Nodes:
+        if node.atEndNode == True:
+            if node.CumulativeLength < ShortestCumulativeLength:
+                ShortestCumulativeLength = node.CumulativeLength
+                ShortestBranchNode = node
+                foundSolution = True
+    print("Shortest Distance: " + str(ShortestCumulativeLength))
 
-    
-
+    if foundSolution == True:
+        # Backtrack and plot shortest path in green
+        current = ShortestBranchNode
+        while current.parent is not None:
+            shortest = ax.plot(
+                [current.position[0], current.parent.position[0]],
+                [current.position[1], current.parent.position[1]],
+                'g', lw=2
+            )
+            current = current.parent
+            
