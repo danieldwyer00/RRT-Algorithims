@@ -9,8 +9,9 @@ points = ax.scatter([], [], c='b')  # current position
 
 
 obstacles = [
-    Polygon([(2, 2), (4, 2), (4, 4), (2, 4)]),  # square obstacle
-    Polygon([(6, 1), (7, 3), (5, 2)])           # triangle obstacle
+    Polygon([(1, 0), (2, 0), (2, 3), (1, 3)]),  # square obstacle
+    Polygon([(3, 1), (4, 1), (4, 4), (3, 4)]),
+    Polygon([(5, 0), (6, 0), (6, 3), (5, 3)])             
 ]
 
 
@@ -45,7 +46,7 @@ maxStepDistance = 3
 endStepDistance = 0.5
 
 StartNode = Node([0,0])
-EndNode = Node([7,4])
+EndNode = Node([7,0])
 
 ax.scatter(StartNode.position[0], StartNode.position[1], c='blue', s=100, label="Start")
 ax.scatter(EndNode.position[0], EndNode.position[1], c='green', s=100, label="Goal")
@@ -53,6 +54,8 @@ ax.scatter(EndNode.position[0], EndNode.position[1], c='green', s=100, label="Go
 Nodes = [
     StartNode
 ]
+
+shortest_path_lines = []
 
 foundSolution = False
 
@@ -89,16 +92,21 @@ while True:
                 ShortestCumulativeLength = node.CumulativeLength
                 ShortestBranchNode = node
                 foundSolution = True
-    print("Shortest Distance: " + str(ShortestCumulativeLength))
+    #print("Shortest Distance: " + str(ShortestCumulativeLength))
 
     if foundSolution == True:
-        # Backtrack and plot shortest path in green
+        # Clear previous shortest path
+        for line in shortest_path_lines:
+            line.remove()
+        shortest_path_lines.clear()
+
+        # Backtrack and plot new shortest path in green
         current = ShortestBranchNode
         while current.parent is not None:
-            shortest = ax.plot(
+            line, = ax.plot(
                 [current.position[0], current.parent.position[0]],
                 [current.position[1], current.parent.position[1]],
                 'g', lw=2
             )
+            shortest_path_lines.append(line)
             current = current.parent
-            
